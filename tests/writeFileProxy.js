@@ -5,6 +5,8 @@
 const fetch = require('node-fetch');
 const { createDpopHeader, generateDpopKeyPair, buildAuthenticatedFetch } = require('@inrupt/solid-client-authn-core');
 const { overwriteFile } = require('@inrupt/solid-client');
+const { getContentType } = require('mime-types');
+
 
 // Ensure command-line arguments are provided
 if (process.argv.length < 6) {
@@ -86,7 +88,6 @@ async function getAccessToken(id, secret, dpopKey) {
 // Modified function to create/write a file
 async function createFile(fileUrl, authFetch) {
     try {
-
         const response = await authFetch(fileUrl, {
             method: 'PUT',  // PUT is commonly used for writing files
             headers: {

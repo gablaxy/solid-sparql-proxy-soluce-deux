@@ -22,7 +22,7 @@ const proxyServer = http.createServer((req, res) => {
 
     console.log('URL cible :', targetUrl);
     console.log('En-têtes :', req.headers);
-    console.log('Method :', req.method);
+    //console.log('Method :', req.method);
 
     // Si la requête est GET, loguer les paramètres GET
     if (req.method === 'GET') {
@@ -79,4 +79,8 @@ proxy.on('error', (err, req, res) => {
 const port = 3001;  // Le port du proxy (peut être personnalisé)
 proxyServer.listen(port, () => {
     console.log(`Proxy en marche sur http://localhost:${port}`);
+});
+
+proxy.on('proxyRes', (proxyRes, req, res) => {
+    console.log(`✅ Réponse du serveur Solid pour ${req.method} ${req.url} : ${proxyRes.statusCode}`);
 });
