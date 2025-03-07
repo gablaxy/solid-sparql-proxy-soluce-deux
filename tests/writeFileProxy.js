@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// ./tests/writeFileProxy.js bob@solid.org bob http://localhost:3001/alice/sparql-permissions.ttl http://localhost:3001
+// ./tests/writeFileProxy.js bob@solid.org bob http://localhost:3001/alice/sparql-permissions.ttl http://localhost:3001 "je viens d'écrire dans le fichier"
 
 const fetch = require('node-fetch');
 const { createDpopHeader, generateDpopKeyPair, buildAuthenticatedFetch } = require('@inrupt/solid-client-authn-core');
@@ -8,7 +8,7 @@ const { overwriteFile } = require('@inrupt/solid-client');
 
 // Ensure command-line arguments are provided
 if (process.argv.length < 6) {
-    console.error("Usage: node write.js <email> <password> <solid_file_url> <server_url>");
+    console.error("Usage: node write.js <email> <password> <solid_file_url> <server_url> <whatyouwritetothefile>");
     process.exit(1);
 }
 
@@ -17,6 +17,7 @@ const email = process.argv[2];
 const password = process.argv[3];
 const fileUrl = process.argv[4];
 const serverUrl = process.argv[5];
+const sparqlrequest = process.argv[6];
 
 // Login and authorization functions remain the same as in your original script
 async function loginAndGetAuthorization(email, password) {
@@ -85,14 +86,13 @@ async function getAccessToken(id, secret, dpopKey) {
 // Modified function to create/write a file
 async function createFile(fileUrl, authFetch) {
     try {
-        const content = "test test";
 
         const response = await authFetch(fileUrl, {
             method: 'PUT',  // PUT is commonly used for writing files
             headers: {
                 'Content-Type': 'text/plain', // Change if writing binary files
             },
-            body: content,
+            body: sparqlrequest,
         });
 
         if (!response.ok) {

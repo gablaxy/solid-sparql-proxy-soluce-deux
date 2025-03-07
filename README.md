@@ -51,9 +51,14 @@ Run proxy:
 node ./scripts/proxy.js
 ```
 
-Run client:
+Run client (read a file):
 ```
 ./tests/readFileProxy.js bob@solid.org bob http://localhost:3001/alice/sparql-permissions.ttl http://localhost:3001
+```
+
+Run client (write to a file):
+```
+./tests/writeFileProxy.js bob@solid.org bob http://localhost:3001/alice/sparql-permissions.ttl http://localhost:3001 "je viens d'écrire dans le fichier"
 ```
 
 Should display the content of sparql-permissions.ttl
