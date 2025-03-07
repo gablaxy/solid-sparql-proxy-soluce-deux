@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  solid-server:
+    image: solidproject/community-server
+    container_name: solid-server
+    restart: always
+    platform: linux/amd64  # Force l'architecture x86_64
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config/default.json:/community-server/default.json
+      - ./data/solid:/data
+      - ./scripts:/scripts
+    environment:
+      - NODE_ENV=production
+      - BIND_ADDRESS=0.0.0.0
+#      - CSS_CONFIG=default.json
+
+  fuseki:
+    image: stain/jena-fuseki
+    container_name: fuseki
+    restart: always
+    ports:
+      - "3030:3030"
+    environment:
+      - ADMIN_PASSWORD=admin
+    volumes:
+      - ./data/fuseki:/fuseki
+
+  # solid-sparql-proxy:
+  #   build: .
+  #   container_name: solid-sparql-proxy
+  #   restart: always
+  #   depends_on:
+  #     - solid-server
+  #     - fuseki
+  #   ports:
+  #     - "4000:4000"
+  #   environment:
+  #     - PORT=4000
+  #     - SPARQL_ENDPOINT=http://fuseki:3030/ds/query
+  #     - SOLID_POD_BASE=http://solid-server:3000/  # ✅ Use service name
+  #     - SOLID_ACL_FILE=http://solid-server:3000/alice/sparql-permissions.ttl  # ✅ Use service name
+  #     - SOLID_ISSUER=http://solid-server:3000  # ✅ Use service name
+  # not so easy to configure
+  # localhost is per-container in Docker, so we need to use the service name
+  # The identifier http://solid-server:3000/alice/sparql-permissions.ttl is outside the configured identifier space.
+  # ie. the url of the solid server should be set properly.
