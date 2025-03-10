@@ -3,6 +3,7 @@ const url = require('url');
 const { createProxyServer } = require('http-proxy');
 const cors = require('cors');  // Pour ajouter la gestion des CORS
 const { Transform } = require('stream');  // Importer le module Transform pour manipuler les données du corps
+const { query } = require('express');
 
 const proxy = createProxyServer();
 
@@ -33,13 +34,16 @@ const proxyServer = http.createServer((req, res) => {
         console.log('Paramètres Not-GET :', req.url);  // Logue les paramètres GET
     }
 
-    // Créer un Transform stream pour loguer le corps de la requête
+    // Créer un Transform stream pour loguer le corps de la requête et la sauvegarder
     const logTransformStream = new Transform({
         transform(chunk, encoding, callback) {
-            // Loguer chaque morceau du corps (chunk) au fur et à mesure
-            console.log('Corps de la requête (morceau) :', chunk.toString());
-            this.push(chunk);  // Passer le morceau de données au flux suivant
-            callback();
+            if(req.method === 'PUT') {
+                console.log('📦 Chunk:', chunk.toString());  // Loguer le corps de la requête
+                // sauvegarder le chunk dans une variable globale
+                global.sparqlrequest = chunk;
+            }
+            this.push(chunk);  // Passer le chunk au prochain stream
+            callback();  // Terminer le traitement du chunk
         }
     });
 
@@ -53,19 +57,6 @@ const proxyServer = http.createServer((req, res) => {
         // Proxy la requête vers le serveur cible
         proxy.web(req, res, { target: targetUrl });
     });
-
-
-    // //    proxy.web(req, res, { target: targetUrl });
-    //     // console.log('Res :', res);
-
-    //     // Ajouter la gestion des CORS
-    //     cors()(req, res, () => {
-    //         // Proxy pour transmettre la requête vers le serveur Solid
-    //         proxy.web(req, res, { target: targetUrl });
-
-    //         // Ajouter la gestion des WebSockets (si nécessaire)
-    //         // proxy.ws(req, res, { target: targetUrl }); // Désactivé temporairement
-    //     });
 });
 
 // Ajout de la gestion des erreurs
@@ -83,4 +74,27 @@ proxyServer.listen(port, () => {
 
 proxy.on('proxyRes', (proxyRes, req, res) => {
     console.log(`✅ Réponse du serveur Solid pour ${req.method} ${req.url} : ${proxyRes.statusCode}`);
+
+    // Si la réponse est un succès, loguer le corps de la réponse
+    if (proxyRes.statusCode === 205) {
+        console.log('🔍 ok le statut est 205 !!!!');
+        console.log(global.sparqlrequest.toString());
+
+        // envoyer la requête SPARQL au serveur fuseki
+        var XMLHttpRequest = require("xhr2");
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("POST", "http://localhost:3030/meteorite/query", true);
+        xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xmlHttp.send("query=" + global.sparqlrequest.toString());
+        console.log('🔍 Requête SPARQL envoyé par le proxy vers fuseki');
+
+        // Attendre la réponse du serveur fuseki
+        xmlHttp.onreadystatechange = function() {
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                console.log('🔍  Réponse SPARQL de fuseki reçue par le proxy');
+                console.log(xmlHttp.responseText);
+                res.end(xmlHttp.responseText);
+            }
+        }
+    }
 });
