@@ -101,6 +101,7 @@ async function createFile(fileUrl, authFetch) {
         }
 
         console.log(`File successfully written to ${fileUrl}`);
+        console.log(`Server response: ${await response.text()}`);
 
     } catch (error) {
         console.error("Error writing to file:", error);
