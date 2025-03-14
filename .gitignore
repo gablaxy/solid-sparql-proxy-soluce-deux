@@ -1,2 +1,6 @@
 node_modules/*
 data/solidproxy/.internal/*
+package-lock.json
+data/solid
+data/solidproxy/.internal/accounts/data/*
+node_modules/.package-lock.json
