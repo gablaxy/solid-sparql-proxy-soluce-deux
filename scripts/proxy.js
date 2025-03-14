@@ -11,13 +11,12 @@ const proxyServer = http.createServer((req, res) => {
     let requestBody = '';
     req.on('data', chunk => requestBody += chunk);
     req.on('end', async () => {
-        if(req.method === 'PUT'){
-            console.log(`Request body received: ${requestBody.substring(0, 200)}...`);
-        }
+        console.log("-----------------");
+        console.log(`Received request: ${req.method} ${req.url}`);
+        console.log(`Request body received: ${requestBody.substring(0, 200)}...`);
+
         try {
-            if(req.method === 'PUT'){
-                console.log(`Forwarding request to Solid: ${solidServer}${req.url}`);
-            }
+            console.log(`Forwarding request to Solid: ${solidServer}${req.url}`);
             
             const solidResponse = await fetch(`${solidServer}${req.url}`, {
                 method: req.method,
@@ -25,9 +24,9 @@ const proxyServer = http.createServer((req, res) => {
                 body: requestBody || undefined
             });
             const solidData = await solidResponse.text();
-            if(req.method === 'PUT'){
-                console.log(`Solid server responded with status: ${solidResponse.status}`);
-            }
+            
+            console.log(`Solid server responded with status: ${solidResponse.status}`);
+
             
             // If the request is a PUT and Solid responds with 205, forward to Fuseki
             if (req.method === 'PUT' && solidResponse.status === 205) {
@@ -47,9 +46,15 @@ const proxyServer = http.createServer((req, res) => {
                     res.end('Error processing SPARQL query');
                 }
             } else {
-                res.writeHead(solidResponse.status);
+                res.writeHead(solidResponse.status, {
+                    ...Object.fromEntries(solidResponse.headers), // Preserve Solid headers
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+                });
                 res.end(solidData);                
             }
+
         } catch (error) {
             console.error('Error forwarding to Solid:', error);
             res.writeHead(500);
@@ -59,5 +64,5 @@ const proxyServer = http.createServer((req, res) => {
 });
 
 proxyServer.listen(3001, () => {
-    console.log('Proxy server listening on port 3001');
+    console.log(`Proxy en marche sur http://localhost:3001`);
 });
